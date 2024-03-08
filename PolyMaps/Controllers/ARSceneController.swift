@@ -100,7 +100,8 @@ class ARSceneController: UIViewController{
             let custom = self.sortedCoordinates[0]
             self.generalIndicator.text = "\(custom.distance), \(self.renderPoint)"
             self.ARIndicator.text = "Render Count \(self.renderCount), custom_loaded \(custom._loaded)"
-            if(custom._loaded == false && custom.distance <= 15){
+            print(self.sortedCoordinates.count)
+            if(custom._loaded == false && custom.distance <= 20){
                 self.renderPoint = true
                 custom._loaded = true
 //                if let plane = raycastForHorizontalSurface(at: CGPoint(x: arView.bounds.midX, y: arView.bounds.midY), in: arView){
@@ -228,10 +229,17 @@ class ARSceneController: UIViewController{
     extension ARSceneController: ARSCNViewDelegate{
         func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
             if self.renderPoint {
-                let sphere = SCNSphere(radius: 0.1)
-                let sphereNode = SCNNode(geometry: sphere)
+                let angle = calculateAngleBetweenCoordinates(current: sortedCoordinates[0], destination: sortedCoordinates[1])
+                let newArrowNode = self.arrowNode.clone()
                 self.renderPoint = false
-                return sphereNode
+                let parentNode = SCNNode()
+//                let sphere = SCNSphere(radius: 0.1)
+//                let newArrowNode = SCNNode(geometry: sphere)
+                newArrowNode.scale = SCNVector3(x:0.001, y: 0.001, z:0.001)
+                newArrowNode.eulerAngles = SCNVector3(0, angle, 0)
+                parentNode.addChildNode(newArrowNode)
+                self.sortedCoordinates.remove(at: 0)
+                return parentNode
             }
             else{
                 return nil
