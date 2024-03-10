@@ -27,6 +27,7 @@ class ARSceneController: UIViewController{
     var renderCount = 0
     var arrowScene : SCNScene = SCNScene()
     var arrowNode: SCNNode = SCNNode()
+    var northernAngle : Double = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,10 +35,12 @@ class ARSceneController: UIViewController{
         self.arView.isUserInteractionEnabled = false
         self.arView.debugOptions = [ARSCNDebugOptions.showFeaturePoints, ARSCNDebugOptions.showWorldOrigin]
         locationManager?.delegate = self
+        locationManager?.startUpdatingHeading()
         arView.delegate = self
         mapView.delegate = self
         mapView.showsUserLocation = true
         getCustomCoordinates()
+        testAngles()
         if let route = route{
             self.mapView.addOverlay(route.polyline)
             self.mapView.setVisibleMapRect(route.polyline.boundingMapRect, animated: true)
@@ -206,10 +209,37 @@ class ARSceneController: UIViewController{
         let angle = acos(dotProduct / (magnitude1 * magnitude2))
         
 //        // Convert angle from radians to degrees
-//        let angleDegrees = angle * 180.0 / .pi
+        let angleDegrees = angle * 180.0 / .pi
         
         //return as radians
-        return angle
+        return angleDegrees
+    }
+    
+    func calculateBearingAngle(current: CustomCoordinates, destination: CustomCoordinates) -> Double {
+        let lon1 = current.longitude
+        let lat1 = current.latitude
+        let lon2 = destination.longitude
+        let lat2 = destination.latitude
+        
+        let dLon = (lon2 - lon1)
+        let y = sin(dLon) * cos(lat2);
+        let x = cos(lat1) * sin(lat2) - sin(lat1)
+                * cos(lat2) * cos(dLon);
+
+        let brng = atan2(y, x);
+        let brngAngle = brng * 180 / .pi
+        let normalBrngAngle = (brngAngle + 360).truncatingRemainder(dividingBy: 360)
+
+
+//        brng = Math.toDegrees(brng);
+//        brng = (brng + 360) % 360;
+//        brng = 360 - brng; // count degrees counter-clockwise - remove to make clockwise
+        
+        //convert bearing angle to radians
+        let brngRadian = normalBrngAngle * (.pi/180)
+        return brngRadian;
+        
+        
     }
     //MARK: - raycastForHorizontalSurface
     func raycastForHorizontalSurface(at point: CGPoint, in sceneView: ARSCNView) -> ARAnchor? {
@@ -224,19 +254,27 @@ class ARSceneController: UIViewController{
         return planeAnchor
     }
     
+    func testAngles(){
+        for i in 0..<sortedCoordinates.count - 1 {
+            print(calculateBearingAngle(current: sortedCoordinates[i], destination: sortedCoordinates[i+1]))
+        }
+    }
+    
 }
     // MARK: - ARSCNViewDelegate
     extension ARSceneController: ARSCNViewDelegate{
         func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
             if self.renderPoint {
-                let angle = calculateAngleBetweenCoordinates(current: sortedCoordinates[0], destination: sortedCoordinates[1])
+                let angle = calculateBearingAngle(current: sortedCoordinates[0], destination: sortedCoordinates[1])
+                let phoneAngle = self.northernAngle * (.pi / 180)
+                let arrowAngle = phoneAngle - angle
                 let newArrowNode = self.arrowNode.clone()
                 self.renderPoint = false
                 let parentNode = SCNNode()
 //                let sphere = SCNSphere(radius: 0.1)
 //                let newArrowNode = SCNNode(geometry: sphere)
                 newArrowNode.scale = SCNVector3(x:0.001, y: 0.001, z:0.001)
-                newArrowNode.eulerAngles = SCNVector3(0, angle, 0)
+                newArrowNode.eulerAngles = SCNVector3(0, arrowAngle, 0)
                 parentNode.addChildNode(newArrowNode)
                 self.sortedCoordinates.remove(at: 0)
                 return parentNode
@@ -293,6 +331,13 @@ extension ARSceneController: CLLocationManagerDelegate{
             addGeoAnchor()
         }else{
             addNormalAnchor()
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        if (abs(self.northernAngle - newHeading.trueHeading) > 90){
+            self.northernAngle = newHeading.trueHeading
+            print(newHeading.trueHeading)
         }
     }
 }
