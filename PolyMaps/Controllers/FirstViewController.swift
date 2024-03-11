@@ -15,17 +15,21 @@ import Contacts
 class FirstViewController: UIViewController{
     @IBOutlet weak var mapView: MKMapView!
     //    @IBOutlet var searchBar: UISearchBar!
+
     @IBOutlet var goButton: UIButton!
     @IBOutlet var searchText: CustomSearchBarViewContainerView!
     var route: MKRoute?
     var myGeoCoder = CLGeocoder()
     var showButton = true
     var coordinatePoints: [CLLocationCoordinate2D] = []
+    var destination = ""
     
     let locationManager = CLLocationManager()
     override func viewDidLoad() {
         super.viewDidLoad()
         mapView.delegate = self
+        mapView.showsCompass = false
+
         locationManager.delegate = self
         searchText.textFieldDelegate = self
         goButton.isHidden = showButton
@@ -122,9 +126,11 @@ class FirstViewController: UIViewController{
                     let ARAnnotation = MyAnnotation(coordinate: mapPoints[i].coordinate, imageName: "ARPin", type: "AR")
                     self.mapView.addAnnotation(ARAnnotation)
                 }
+//                self.goButton.isHidden = !showButton
+                presentModalView()
+                
             }
         }
-        self.goButton.isHidden = !showButton
     }
     
     //MARK: addCustomPOI
@@ -167,12 +173,35 @@ class FirstViewController: UIViewController{
         if segue.identifier == "ARTransition"{
             if let destinationVC = segue.destination as? ARSceneController{
                 //send data
+                destinationVC.origin = self.locationManager.location
+                destinationVC.finalDestination = self.coordinatePoints.last
                 destinationVC.destCoordinates = self.coordinatePoints
                 destinationVC.locationManager = self.locationManager
                 destinationVC.route = self.route
                 
             }
         }
+    }
+    
+    //MARK: - Presenting View Programatically
+    func presentModalView(){
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        guard let destinationController = storyboard.instantiateViewController(withIdentifier: "GoViewController") as? GoViewController
+        else { return }
+
+        if let presentationController = destinationController.presentationController as? UISheetPresentationController {
+            presentationController.detents = [.custom{context in 250}]
+        }
+        destinationController.origin = self.locationManager.location
+        destinationController.finalDestination = self.coordinatePoints.last
+        destinationController.destCoordinates = self.coordinatePoints
+        destinationController.locationManager = self.locationManager
+        destinationController.route = self.route
+        destinationController.destination = self.title
+        self.present(destinationController, animated: true)
+    }
+    
+    @IBAction func unwind(_ seg: UIStoryboardSegue) {
     }
 }
 
@@ -266,6 +295,8 @@ extension FirstViewController: MKMapViewDelegate {
         guard let destLocation = view.annotation?.coordinate else {return}
         if let title = view.annotation?.title as? String {
             self.goButton.setTitle(title, for: .normal)
+            self.title = title
+
         }
         fetchDirection(currLocation, destLocation)
     }

@@ -24,6 +24,7 @@
 		8ECAC77E2B7EBEB200925CA2 /* MyAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ECAC77D2B7EBEB200925CA2 /* MyAnnotationView.swift */; };
 		8ECAC7812B7EC6C500925CA2 /* MyAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ECAC7802B7EC6C500925CA2 /* MyAnnotation.swift */; };
 		8ECAC7862B82D7DA00925CA2 /* CustomSearchBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ECAC7852B82D7DA00925CA2 /* CustomSearchBarView.swift */; };
+		8ED187B12B9E632800621816 /* GoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ED187B02B9E632800621816 /* GoViewController.swift */; };
 		8EEEA0072B83305C00B5DAC5 /* ARKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8EEEA0062B83305B00B5DAC5 /* ARKit.framework */; };
 /* End PBXBuildFile section */
 
@@ -66,6 +67,7 @@
 		8ECAC77D2B7EBEB200925CA2 /* MyAnnotationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyAnnotationView.swift; sourceTree = "<group>"; };
 		8ECAC7802B7EC6C500925CA2 /* MyAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyAnnotation.swift; sourceTree = "<group>"; };
 		8ECAC7852B82D7DA00925CA2 /* CustomSearchBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSearchBarView.swift; sourceTree = "<group>"; };
+		8ED187B02B9E632800621816 /* GoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoViewController.swift; sourceTree = "<group>"; };
 		8EEEA0062B83305B00B5DAC5 /* ARKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ARKit.framework; path = System/Library/Frameworks/ARKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -181,6 +183,7 @@
 			children = (
 				8E0880482ADDBD2000EB47C4 /* FirstViewController.swift */,
 				8E85E9E32AE638F700DCAF54 /* ARSceneController.swift */,
+				8ED187B02B9E632800621816 /* GoViewController.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -340,6 +343,7 @@
 				8E0880492ADDBD2000EB47C4 /* FirstViewController.swift in Sources */,
 				8ECAC77E2B7EBEB200925CA2 /* MyAnnotationView.swift in Sources */,
 				8E0880452ADDBD2000EB47C4 /* AppDelegate.swift in Sources */,
+				8ED187B12B9E632800621816 /* GoViewController.swift in Sources */,
 				8E431BAD2B63904600B76411 /* HomeView.swift in Sources */,
 				8ECAC7862B82D7DA00925CA2 /* CustomSearchBarView.swift in Sources */,
 				8E85E9E42AE638F700DCAF54 /* ARSceneController.swift in Sources */,

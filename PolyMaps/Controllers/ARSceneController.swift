@@ -13,16 +13,19 @@ import UIKit
 import MapKit
 class ARSceneController: UIViewController{
     
-    @IBOutlet var generalIndicator: UILabel!
+    @IBOutlet var DistanceIndicator: UILabel!
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet var arView: ARSCNView!
+    @IBOutlet var totalProgress: UIProgressView!
     //Data recieved from Segue
-    @IBOutlet var ARIndicator: UILabel!
     var destCoordinates: [CLLocationCoordinate2D]?
     var locationManager: CLLocationManager?
+    var finalDestination: CLLocationCoordinate2D?
+    var origin: CLLocation?
+    var route: MKRoute?
+    var totalDistance : Double = 0
     var sortedCoordinates: [CustomCoordinates] = []
     var geoAnchor: Bool = false
-    var route: MKRoute?
     var renderPoint: Bool = false
     var renderCount = 0
     var arrowScene : SCNScene = SCNScene()
@@ -31,9 +34,11 @@ class ARSceneController: UIViewController{
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.arView.showsStatistics = true
+        self.DistanceIndicator.layer.cornerRadius = 10
+        self.DistanceIndicator.layer.masksToBounds = true
+//        self.arView.showsStatistics = true
         self.arView.isUserInteractionEnabled = false
-        self.arView.debugOptions = [ARSCNDebugOptions.showFeaturePoints, ARSCNDebugOptions.showWorldOrigin]
+//        self.arView.debugOptions = [ARSCNDebugOptions.showFeaturePoints, ARSCNDebugOptions.showWorldOrigin]
         locationManager?.delegate = self
         locationManager?.startUpdatingHeading()
         arView.delegate = self
@@ -41,6 +46,7 @@ class ARSceneController: UIViewController{
         mapView.showsUserLocation = true
         getCustomCoordinates()
         testAngles()
+        getInitialDistance()
         if let route = route{
             self.mapView.addOverlay(route.polyline)
             self.mapView.setVisibleMapRect(route.polyline.boundingMapRect, animated: true)
@@ -68,7 +74,6 @@ class ARSceneController: UIViewController{
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -76,6 +81,17 @@ class ARSceneController: UIViewController{
         
         // Pause the view's session
         arView.session.pause()
+        if isBeingDismissed{
+            performSegue(withIdentifier: "unwindToMain", sender: self)
+        }
+    }
+    
+    //MARK: -Getting Initial Distance
+    func getInitialDistance(){
+        if let origin = self.origin, let destination = self.finalDestination{
+            let destinationLocation = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
+            self.totalDistance = origin.distance(from: destinationLocation)
+        }
     }
     
     //MARK: - Loading Point Method
@@ -101,16 +117,10 @@ class ARSceneController: UIViewController{
         //Gets the three nearest coordinates
         if(!sortedCoordinates.isEmpty){
             let custom = self.sortedCoordinates[0]
-            self.generalIndicator.text = "\(custom.distance), \(self.renderPoint)"
-            self.ARIndicator.text = "Render Count \(self.renderCount), custom_loaded \(custom._loaded)"
-            print(self.sortedCoordinates.count)
-            if(custom._loaded == false && custom.distance <= 20){
+            self.DistanceIndicator.text = "Distance To Nearest Point: \(custom.distance.rounded()) Meters"
+            if(custom._loaded == false && custom.distance <= 10){
                 self.renderPoint = true
                 custom._loaded = true
-//                if let plane = raycastForHorizontalSurface(at: CGPoint(x: arView.bounds.midX, y: arView.bounds.midY), in: arView){
-//                    print("Normal Anchor Placed")
-//                    self.arView.session.add(anchor: plane)
-//                }
             }
         }
     }
@@ -162,58 +172,14 @@ class ARSceneController: UIViewController{
     }
     
     func addArrowToScene(){
-        let angle = calculateAngleBetweenCoordinates(current: sortedCoordinates[0], destination: sortedCoordinates[1])
-        let arrowScene = SCNScene(named: "art.scnassets/direction_arrow.scn")!
-        let arrowNode = arrowScene.rootNode.childNodes.first!.clone()
-        arrowNode.name = "ArrowNode"
-        arrowNode.scale = SCNVector3(x: 0.001, y: 0.002, z: 0.001)
-        arrowNode.eulerAngles = SCNVector3(x:0,y:Float(angle),z:0)
-        self.arView.scene.rootNode.addChildNode(arrowNode)
-        
+//        let arrowScene = SCNScene(named: "art.scnassets/direction_arrow.scn")!
+//        let arrowNode = arrowScene.rootNode.childNodes.first!.clone()
+//        arrowNode.name = "ArrowNode"
+//        arrowNode.scale = SCNVector3(x: 0.001, y: 0.002, z: 0.001)
+//        arrowNode.eulerAngles = SCNVector3(x:0,y:Float(angle),z:0)
+//        self.arView.scene.rootNode.addChildNode(arrowNode)
     }
     
-    //MARK: - calculateAngleBetweenCoordinates
-    func calculateAngleBetweenCoordinates(current : CustomCoordinates, destination: CustomCoordinates) -> Double {
-        let lat1 = current.latitude
-        let lon1 = current.latitude
-        
-        let lat2 = destination.latitude
-        let lon2 = destination.longitude
-        
-        // Earth radius in kilometers
-        let earthRadius: Double = 6371.0
-        
-        // Convert latitude and longitude from degrees to radians
-        let lat1Rad = lat1 * .pi / 180.0
-        let lon1Rad = lon1 * .pi / 180.0
-        let lat2Rad = lat2 * .pi / 180.0
-        let lon2Rad = lon2 * .pi / 180.0
-        
-        // Convert latitude and longitude to Cartesian coordinates
-        let x1 = earthRadius * cos(lat1Rad) * cos(lon1Rad)
-        let y1 = earthRadius * cos(lat1Rad) * sin(lon1Rad)
-        let z1 = earthRadius * sin(lat1Rad)
-        
-        let x2 = earthRadius * cos(lat2Rad) * cos(lon2Rad)
-        let y2 = earthRadius * cos(lat2Rad) * sin(lon2Rad)
-        let z2 = earthRadius * sin(lat2Rad)
-        
-        // Calculate the dot product of the two vectors
-        let dotProduct = x1 * x2 + y1 * y2 + z1 * z2
-        
-        // Calculate the magnitudes of the two vectors
-        let magnitude1 = sqrt(x1 * x1 + y1 * y1 + z1 * z1)
-        let magnitude2 = sqrt(x2 * x2 + y2 * y2 + z2 * z2)
-        
-        // Calculate the angle in radians
-        let angle = acos(dotProduct / (magnitude1 * magnitude2))
-        
-//        // Convert angle from radians to degrees
-        let angleDegrees = angle * 180.0 / .pi
-        
-        //return as radians
-        return angleDegrees
-    }
     
     func calculateBearingAngle(current: CustomCoordinates, destination: CustomCoordinates) -> Double {
         let lon1 = current.longitude
@@ -230,10 +196,6 @@ class ARSceneController: UIViewController{
         let brngAngle = brng * 180 / .pi
         let normalBrngAngle = (brngAngle + 360).truncatingRemainder(dividingBy: 360)
 
-
-//        brng = Math.toDegrees(brng);
-//        brng = (brng + 360) % 360;
-//        brng = 360 - brng; // count degrees counter-clockwise - remove to make clockwise
         
         //convert bearing angle to radians
         let brngRadian = normalBrngAngle * (.pi/180)
@@ -264,9 +226,9 @@ class ARSceneController: UIViewController{
     // MARK: - ARSCNViewDelegate
     extension ARSceneController: ARSCNViewDelegate{
         func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-            if self.renderPoint {
+            if let lm = self.locationManager, let heading = lm.heading, self.renderPoint {
                 let angle = calculateBearingAngle(current: sortedCoordinates[0], destination: sortedCoordinates[1])
-                let phoneAngle = self.northernAngle * (.pi / 180)
+                let phoneAngle = heading.trueHeading * (.pi / 180)
                 let arrowAngle = phoneAngle - angle
                 let newArrowNode = self.arrowNode.clone()
                 self.renderPoint = false
@@ -283,24 +245,6 @@ class ARSceneController: UIViewController{
                 return nil
             }
         }
-        
-//       func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-//           if self.renderPoint == true{
-//               let angle = calculateAngleBetweenCoordinates(current: sortedCoordinates[0], destination: sortedCoordinates[1])
-//                NSLog("view delgate hit")
-//                self.renderPoint = false
-//                print("\(angle)")
-//                let newArrowNode = self.arrowNode.clone()
-//                newArrowNode.scale = SCNVector3(x: 0.005, y: 0.001, z: 0.005)
-//                newArrowNode.position = SCNVector3(anchor.transform.columns.3.x, anchor.transform.columns.3.y, anchor.transform.columns.3.z)
-//                newArrowNode.eulerAngles = SCNVector3(0, angle, 0)
-//                let exampleSphere = SCNNode(geometry: SCNSphere(radius: 0.2))
-//                self.arView.scene.rootNode.addChildNode(exampleSphere)
-//                self.renderCount += 1
-//                node.addChildNode(newArrowNode)
-//                sortedCoordinates[0].loaded = true
-//           }
-//        }
     }
      
 
@@ -323,9 +267,14 @@ class ARSceneController: UIViewController{
 //MARK: - CLLocationManagerDelegate
 extension ARSceneController: CLLocationManagerDelegate{
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        if let location = locations.last{
+        if let location = locations.last, let destination = self.finalDestination{
+            //setting region of map to show
             let currentRegion = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 500, longitudinalMeters: 500)
             mapView.setRegion(currentRegion, animated: true)
+            //setting distance progress
+            let finalLocation = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
+            let progress = 1.0 - (location.distance(from: finalLocation) / self.totalDistance)
+            self.totalProgress.progress = Float(progress)
         }
         if geoAnchor == true{
             addGeoAnchor()
