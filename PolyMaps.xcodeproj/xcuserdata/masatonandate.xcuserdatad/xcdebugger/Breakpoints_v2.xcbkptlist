@@ -34,38 +34,6 @@
             endingLineNumber = "87"
             landmarkName = "fetchGeoCoordinates(address:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "F16DA78A-3A98-4BF8-B5F2-59D78D0DB3AC - 12551d2893ba1b53"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 (Swift.Optional&lt;Swift.Array&lt;__C.CLPlacemark&gt;&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in PolyMaps.ViewController.fetchGeoCoordinates(address: Swift.String) -&gt; Swift.Optional&lt;__C.CLLocationCoordinate2D&gt;"
-                  moduleName = "PolyMaps"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/masatonandate/Desktop/IOS_development/PolyMaps/PolyMaps/ViewController.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "84"
-                  endingLineNumber = "84"
-                  offsetFromSymbolStart = "796">
-               </Location>
-               <Location
-                  uuid = "F16DA78A-3A98-4BF8-B5F2-59D78D0DB3AC - 12551d2893ba1b91"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 (Swift.Optional&lt;Swift.Array&lt;__C.CLPlacemark&gt;&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in PolyMaps.ViewController.fetchGeoCoordinates(address: Swift.String) -&gt; Swift.Optional&lt;__C.CLLocationCoordinate2D&gt;"
-                  moduleName = "PolyMaps"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/masatonandate/Desktop/IOS_development/PolyMaps/PolyMaps/ViewController.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "86"
-                  endingLineNumber = "86"
-                  offsetFromSymbolStart = "808">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -78,25 +46,9 @@
             filePath = "PolyMaps/Controllers/ARSceneController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "169"
-            endingLineNumber = "169"
+            startingLineNumber = "200"
+            endingLineNumber = "200"
             landmarkName = "addArrow()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "E0D0B3C7-3FF5-4398-B4FC-382204FDD351"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "PolyMaps/Controllers/ARSceneController.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "208"
-            endingLineNumber = "208"
-            landmarkName = "raycastForHorizontalSurface(at:in:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -110,8 +62,8 @@
             filePath = "PolyMaps/Controllers/ARSceneController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "233"
-            endingLineNumber = "233"
+            startingLineNumber = "253"
+            endingLineNumber = "253"
             landmarkName = "renderer(_:nodeFor:)"
             landmarkType = "7">
          </BreakpointContent>

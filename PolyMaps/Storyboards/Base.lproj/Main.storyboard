@@ -22,15 +22,6 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <standardMapConfiguration key="preferredConfiguration"/>
                             </mapView>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="n5d-ej-XJi">
-                                <rect key="frame" x="100" y="742" width="190" height="55"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="filled" title="Button" buttonSize="medium"/>
-                                <connections>
-                                    <action selector="buttonTapped:" destination="BV1-FR-VrT" eventType="touchUpInside" id="3mB-zE-Gby"/>
-                                </connections>
-                            </button>
                             <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cze-pX-M6C" customClass="CustomSearchBarViewContainerView" customModule="PolyMaps" customModuleProvider="target">
                                 <rect key="frame" x="75" y="68" width="240" height="40"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -40,7 +31,6 @@
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                     </view>
                     <connections>
-                        <outlet property="goButton" destination="n5d-ej-XJi" id="wuU-n9-qYe"/>
                         <outlet property="mapView" destination="ezI-HF-NEz" id="nGq-xT-M6I"/>
                         <outlet property="searchText" destination="cze-pX-M6C" id="ZEq-1Y-ehf"/>
                     </connections>

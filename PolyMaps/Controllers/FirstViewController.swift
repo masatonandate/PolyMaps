@@ -16,7 +16,6 @@ class FirstViewController: UIViewController{
     @IBOutlet weak var mapView: MKMapView!
     //    @IBOutlet var searchBar: UISearchBar!
 
-    @IBOutlet var goButton: UIButton!
     @IBOutlet var searchText: CustomSearchBarViewContainerView!
     var route: MKRoute?
     var myGeoCoder = CLGeocoder()
@@ -25,14 +24,23 @@ class FirstViewController: UIViewController{
     var destination = ""
     
     let locationManager = CLLocationManager()
+    
+    fileprivate func setupLongPress() -> UILongPressGestureRecognizer {
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(self.handleLongPress))
+        longPress.minimumPressDuration = 1
+        longPress.delaysTouchesBegan = true
+//        longPress.delegate = self
+        return longPress
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        var longPress = setupLongPress()
         mapView.delegate = self
+        mapView.addGestureRecognizer(longPress)
         mapView.showsCompass = false
-
         locationManager.delegate = self
         searchText.textFieldDelegate = self
-        goButton.isHidden = showButton
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -42,10 +50,6 @@ class FirstViewController: UIViewController{
         locationManager.startUpdatingLocation()
         mapView.isZoomEnabled = true
         mapView.isScrollEnabled = true
-        //        searchBar.text = "Input Location"
-        goButton.setTitle("GO", for: .normal)
-        goButton.contentHorizontalAlignment = .center
-        goButton.contentVerticalAlignment = .center
         addCustomPOI()
     }
     
@@ -116,7 +120,10 @@ class FirstViewController: UIViewController{
                 //adding the line to map
                 self.route = firstRoute
                 self.mapView.addOverlay(firstRoute.polyline)
-                self.mapView.setVisibleMapRect(firstRoute.polyline.boundingMapRect, animated: true)
+                let mapSize = firstRoute.polyline.boundingMapRect.size
+                let mapOrigin = firstRoute.polyline.boundingMapRect.origin
+                let newBoundingMap = MKMapRect(origin: mapOrigin, size: MKMapSize(width: mapSize.width * 1.5, height: mapSize.height * 1.5))
+                self.mapView.setVisibleMapRect(newBoundingMap, animated: true)
                 //getting the in-between points and adding it to an array
                 let mapPoints = firstRoute.polyline.points()
                 let count = firstRoute.polyline.pointCount
@@ -162,24 +169,17 @@ class FirstViewController: UIViewController{
         }
     }
     
-    //MARK: -Segue
-    // Connect this action to the button in the storyboard
-    @IBAction func buttonTapped(_ sender: UIButton) {
-        // Replace "YourSegueIdentifier" with the actual identifier you set for the segue in the storyboard
-        performSegue(withIdentifier: "ARTransition", sender: self)
-    }
-    // Send data through a segway
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "ARTransition"{
-            if let destinationVC = segue.destination as? ARSceneController{
-                //send data
-                destinationVC.origin = self.locationManager.location
-                destinationVC.finalDestination = self.coordinatePoints.last
-                destinationVC.destCoordinates = self.coordinatePoints
-                destinationVC.locationManager = self.locationManager
-                destinationVC.route = self.route
-                
-            }
+    //MARK: Long Press Handler
+    @objc func handleLongPress(gestureRecognizer: UILongPressGestureRecognizer) {
+        if gestureRecognizer.state != UIGestureRecognizer.State.ended{
+            return
+        }
+        else if gestureRecognizer.state != UIGestureRecognizer.State.began {
+            let touchPoint = gestureRecognizer.location(in: self.mapView)
+            let touchCoordinate = self.mapView.convert(touchPoint, toCoordinateFrom: self.mapView)
+            let customAnnot = MyAnnotation(title: "Pressed Location", coordinate: touchCoordinate, imageName: "POIPin", type: "POI")
+            self.mapView.addAnnotation(customAnnot)
+            
         }
     }
     
@@ -231,8 +231,6 @@ extension FirstViewController: UISearchBarDelegate{
         destCoordinates = CLLocationCoordinate2D(latitude: CLLocationDegrees(myCoordinates.first?.lat ?? 0), longitude: CLLocationDegrees(myCoordinates.first?.lon ?? 0))
         sourceCoordinates = currLocation
         fetchDirection(sourceCoordinates, destCoordinates)
-        
-//        self.searchBar.endEditing(true)
     }
 }
 
@@ -294,9 +292,7 @@ extension FirstViewController: MKMapViewDelegate {
         guard let currLocation = locationManager.location?.coordinate else {return}
         guard let destLocation = view.annotation?.coordinate else {return}
         if let title = view.annotation?.title as? String {
-            self.goButton.setTitle(title, for: .normal)
             self.title = title
-
         }
         fetchDirection(currLocation, destLocation)
     }
