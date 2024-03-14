@@ -41,6 +41,10 @@ class FirstViewController: UIViewController{
         mapView.showsCompass = false
         locationManager.delegate = self
         searchText.textFieldDelegate = self
+        let compassButton = MKCompassButton(mapView: mapView)
+        compassButton.compassVisibility = .visible
+        
+        mapView.addSubview(compassButton)
     }
     
     override func viewDidAppear(_ animated: Bool) {

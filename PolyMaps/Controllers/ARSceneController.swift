@@ -131,9 +131,9 @@ class ARSceneController: UIViewController{
         if(!sortedCoordinates.isEmpty && !reachedGoal()){
             let custom = self.sortedCoordinates[0]
             let order = custom.order
-            removePassedPoints(order: order)
             self.DistanceIndicator.text = "Distance To Nearest Point: \(custom.distance.rounded()) Meters"
-            if(custom._loaded == false && custom.distance <= 10){
+            if(custom._loaded == false && custom.distance <= 20){
+                removePassedPoints(order: order)
                 self.renderPoint = true
                 custom._loaded = true
             }
@@ -187,7 +187,7 @@ class ARSceneController: UIViewController{
     func removePassedPoints(order: Int){
         var newCoordinates : [CustomCoordinates] = []
         for coordinate in sortedCoordinates {
-            if coordinate.order > order{
+            if coordinate.order >= order{
                 newCoordinates.append(coordinate)
             }
         }
@@ -217,10 +217,11 @@ class ARSceneController: UIViewController{
         let brng = atan2(y, x);
         let brngAngle = brng * 180 / .pi
         let normalBrngAngle = (brngAngle + 360).truncatingRemainder(dividingBy: 360)
+        let clockWiseBrngAngle = 360 - normalBrngAngle
 
         
         //convert bearing angle to radians
-        let brngRadian = normalBrngAngle * (.pi/180)
+        let brngRadian = clockWiseBrngAngle * (.pi/180)
         return brngRadian;
         
         
@@ -236,7 +237,6 @@ class ARSceneController: UIViewController{
         if let manager = self.locationManager, let location = manager.location, let final = self.finalDestination {
             let finalLocation = CLLocation(latitude: final.latitude, longitude: final.longitude)
             let distance = location.distance(from: finalLocation)
-            print(distance)
             return distance < 5
         }
         return false
@@ -249,11 +249,15 @@ class ARSceneController: UIViewController{
             if let lm = self.locationManager, let heading = lm.heading, self.renderPoint {
                 let angle = calculateBearingAngle(current: sortedCoordinates[0], destination: sortedCoordinates[1])
                 let phoneAngle = heading.trueHeading * (.pi / 180)
+                print("pointAngle: ", angle * (180 / .pi))
+                print("phone Angle: ", heading.trueHeading)
                 let arrowAngle = angle - phoneAngle
-                let newArrowNode = self.arrowNode.clone()
+                print("arrowAngle", arrowAngle * (180 / .pi))
+                let newArrowNode = self.arrowNode
                 let parentNode = SCNNode()
                 newArrowNode.scale = SCNVector3(x:0.001, y: 0.001, z:0.001)
-                newArrowNode.eulerAngles = SCNVector3(0, arrowAngle, 0)
+                let straightRot = (Double.pi / 2)
+                newArrowNode.eulerAngles = SCNVector3(0, straightRot - arrowAngle, 0)
                 parentNode.addChildNode(newArrowNode)
                 if !self.sortedCoordinates.isEmpty{
                     self.sortedCoordinates.remove(at: 0)
@@ -306,7 +310,6 @@ extension ARSceneController: CLLocationManagerDelegate{
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         if (abs(self.northernAngle - newHeading.trueHeading) > 90){
             self.northernAngle = newHeading.trueHeading
-            print(newHeading.trueHeading)
         }
     }
 }

@@ -47,6 +47,10 @@ class CustomCoordinates: Codable, Comparable{
         return lhs.distance < rhs.distance
     }
     
+//    static func < (lhs: CustomCoordinates, rhs: CustomCoordinates) -> Bool {
+//        return lhs.order < rhs.order
+//    }
+    
     static func == (lhs: CustomCoordinates, rhs: CustomCoordinates) -> Bool {
         return lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
     }
