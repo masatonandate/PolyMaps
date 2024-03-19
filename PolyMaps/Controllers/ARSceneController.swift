@@ -11,11 +11,13 @@ import SceneKit
 import CoreLocation
 import UIKit
 import MapKit
+import AudioToolbox
 class ARSceneController: UIViewController{
     
     @IBOutlet var DistanceIndicator: UILabel!
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet var arView: ARSCNView!
+    @IBOutlet var AngleIndicator: UILabel!
     @IBOutlet var totalProgress: UIProgressView!
     //Data recieved from Segue
     var destCoordinates: [CLLocationCoordinate2D]?
@@ -28,9 +30,11 @@ class ARSceneController: UIViewController{
     var geoAnchor: Bool = false
     var renderPoint: Bool = false
     var renderCount = 0
-    var arrowScene : SCNScene = SCNScene()
     var arrowNode: SCNNode = SCNNode()
-    var northernAngle : Double = 0
+    var arrowRotation: Double = 0
+    var currentARPoint: CustomCoordinates?
+    var initialHeading: CLLocationDirection?
+    var arrowStraightRotation: Double = (Double.pi / 2)
     
     fileprivate func setupDistanceIndicator() {
         self.DistanceIndicator.layer.cornerRadius = 10
@@ -46,9 +50,10 @@ class ARSceneController: UIViewController{
     }
     
     fileprivate func instantiateArrow() {
-        self.arrowScene = SCNScene(named: "art.scnassets/direction_arrow.scn")!
+        let arrowScene = SCNScene(named: "art.scnassets/direction_arrow.scn")!
         self.arrowNode = arrowScene.rootNode.childNodes.first!.clone()
         self.arrowNode.name = "ArrowNode"
+        self.arrowNode.scale = SCNVector3(x:0.002, y: 0.002, z:0.002)
     }
     
     fileprivate func configureAR() {
@@ -68,6 +73,12 @@ class ARSceneController: UIViewController{
         }
     }
     
+    fileprivate func configureInitialHeading(){
+        if let lm = locationManager, let heading = lm.heading{
+            self.initialHeading = heading.trueHeading
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupDistanceIndicator()
@@ -83,6 +94,8 @@ class ARSceneController: UIViewController{
         drawRoute()
         instantiateArrow()
         configureAR()
+        configureInitialHeading()
+        self.AngleIndicator.isHidden = true
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -131,10 +144,20 @@ class ARSceneController: UIViewController{
         if(!sortedCoordinates.isEmpty && !reachedGoal()){
             let custom = self.sortedCoordinates[0]
             let order = custom.order
+            let group = DispatchGroup()
+            self.AngleIndicator.text = "Angle: \(self.arrowStraightRotation * (180 / .pi))"
             self.DistanceIndicator.text = "Distance To Nearest Point: \(custom.distance.rounded()) Meters"
-            if(custom._loaded == false && custom.distance <= 20){
-                removePassedPoints(order: order)
-                self.renderPoint = true
+            if(custom._loaded == false && custom.distance <= 15){
+                group.enter()
+                print("current Point:\(order)")
+                removePassedPoints(order: order){
+                    self.sortedCoordinates = self.sortedCoordinates.sorted(by: CustomCoordinates.Comparison.orderSorting)
+                    group.leave()
+                }
+                group.notify(queue: .main){
+                    self.currentARPoint = custom
+                    self.renderPoint = true
+                }
                 custom._loaded = true
             }
         }
@@ -165,7 +188,7 @@ class ARSceneController: UIViewController{
                 let distance = location.distance(from: coord)
                 point._distance = distance
             }
-            self.sortedCoordinates = self.sortedCoordinates.sorted()
+            self.sortedCoordinates = self.sortedCoordinates.sorted(by: CustomCoordinates.Comparison.distanceSorting)
         }
     }
     
@@ -184,7 +207,7 @@ class ARSceneController: UIViewController{
     }
     
     //MARK: -Remove Old Points()
-    func removePassedPoints(order: Int){
+    func removePassedPoints(order: Int, completion: @escaping () -> Void){
         var newCoordinates : [CustomCoordinates] = []
         for coordinate in sortedCoordinates {
             if coordinate.order >= order{
@@ -192,15 +215,21 @@ class ARSceneController: UIViewController{
             }
         }
         self.sortedCoordinates = newCoordinates
+        completion()
     }
     
-    //MARK: - addArrow()
-    func addArrow() -> SCNNode{
-        let arrowScene = SCNScene(named: "art.scnassets/direction_arrow.scn")!
-        let arrowNode = arrowScene.rootNode.childNodes.first!.clone()
-        arrowNode.name = "ArrowNode"
-        return arrowNode
+    //MARK: -Find next point
+    func findNextPoint(current: CustomCoordinates?) -> CustomCoordinates?{
+        if let currOrder = current?.order{
+            for coord in sortedCoordinates{
+                if coord.order == currOrder + 1{
+                    return coord
+                }
+            }
+        }
+        return nil
     }
+    
     
     
     func calculateBearingAngle(current: CustomCoordinates, destination: CustomCoordinates) -> Double {
@@ -233,11 +262,13 @@ class ARSceneController: UIViewController{
         }
     }
     
+    
+    
     func reachedGoal() -> Bool{
         if let manager = self.locationManager, let location = manager.location, let final = self.finalDestination {
             let finalLocation = CLLocation(latitude: final.latitude, longitude: final.longitude)
             let distance = location.distance(from: finalLocation)
-            return distance < 5
+            return distance < 20
         }
         return false
     }
@@ -246,22 +277,37 @@ class ARSceneController: UIViewController{
     // MARK: - ARSCNViewDelegate
     extension ARSceneController: ARSCNViewDelegate{
         func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-            if let lm = self.locationManager, let heading = lm.heading, self.renderPoint {
-                let angle = calculateBearingAngle(current: sortedCoordinates[0], destination: sortedCoordinates[1])
+            if let lm = self.locationManager, let heading = lm.heading, let current = currentARPoint, let next = findNextPoint(current: current),
+                self.renderPoint, sortedCoordinates.count >= 2 {
+                let angle = calculateBearingAngle(current: current, destination: next)
                 let phoneAngle = heading.trueHeading * (.pi / 180)
+                
                 print("pointAngle: ", angle * (180 / .pi))
                 print("phone Angle: ", heading.trueHeading)
-                let arrowAngle = angle - phoneAngle
+                
+                
+                print("angleDiff: ", (angle-phoneAngle) * (180 / .pi))
+                
+                
+                let angleDiff = angle - phoneAngle
+                
+                let arrowAngle = round((angleDiff) / (.pi/2)) * (.pi/2)
                 print("arrowAngle", arrowAngle * (180 / .pi))
+                
+                
                 let newArrowNode = self.arrowNode
                 let parentNode = SCNNode()
-                newArrowNode.scale = SCNVector3(x:0.001, y: 0.001, z:0.001)
                 let straightRot = (Double.pi / 2)
-                newArrowNode.eulerAngles = SCNVector3(0, straightRot - arrowAngle, 0)
+                print(" arrow straight rotation: \(self.arrowStraightRotation * (180 / .pi))")
+                let degreeArrow = arrowAngle * (180 / .pi)
+                self.arrowRotation = arrowAngle * (180 / .pi)
+                
+                newArrowNode.eulerAngles = SCNVector3(0, self.arrowStraightRotation - arrowAngle, 0)
                 parentNode.addChildNode(newArrowNode)
                 if !self.sortedCoordinates.isEmpty{
                     self.sortedCoordinates.remove(at: 0)
                 }
+                AudioServicesPlayAlertSoundWithCompletion(SystemSoundID(kSystemSoundID_Vibrate)) { }
                 self.renderPoint = false
                 return parentNode
             }
@@ -308,8 +354,29 @@ extension ARSceneController: CLLocationManagerDelegate{
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        if (abs(self.northernAngle - newHeading.trueHeading) > 90){
-            self.northernAngle = newHeading.trueHeading
+        if let initial = self.initialHeading{
+            let headingDiff = round((newHeading.trueHeading - initial) / 90.0) * 90.0
+            print("Difference between \(initial) and \(newHeading.trueHeading) is \(headingDiff)")
+            if (headingDiff == 90 || headingDiff == -270){
+                print(headingDiff)
+                print(self.arrowStraightRotation)
+                self.arrowStraightRotation -= (Double.pi / 2)
+                self.initialHeading = newHeading.trueHeading
+            }
+            else if (headingDiff == -90 || headingDiff == 270){
+                print(headingDiff)
+                print(self.arrowStraightRotation)
+                self.arrowStraightRotation += (Double.pi / 2)
+                self.initialHeading = newHeading.trueHeading
+            }
+            else if(abs(headingDiff) == 180){
+                print(headingDiff)
+                print(self.arrowStraightRotation)
+                self.arrowStraightRotation += Double.pi
+                self.initialHeading = newHeading.trueHeading
+            }
+        }else{
+            self.initialHeading = newHeading.trueHeading
         }
     }
 }

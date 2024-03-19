@@ -43,13 +43,13 @@ class CustomCoordinates: Codable, Comparable{
         }
     }
     
-    static func < (lhs: CustomCoordinates, rhs: CustomCoordinates) -> Bool {
-        return lhs.distance < rhs.distance
-    }
-    
 //    static func < (lhs: CustomCoordinates, rhs: CustomCoordinates) -> Bool {
-//        return lhs.order < rhs.order
+//        return lhs.distance < rhs.distance
 //    }
+    
+    static func < (lhs: CustomCoordinates, rhs: CustomCoordinates) -> Bool {
+        return lhs.order < rhs.order
+    }
     
     static func == (lhs: CustomCoordinates, rhs: CustomCoordinates) -> Bool {
         return lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
@@ -67,7 +67,13 @@ extension CustomCoordinates{
         CustomCoordinates(latitude: 35.2986685, longitude: -120.6599450, title: "The Rec"),
         CustomCoordinates(latitude: 35.30012, longitude: -120.66229, title: "Frank E. Pilling"),
         CustomCoordinates(latitude: 35.29491, longitude: -120.66275, title: "Masato's House")
-        
-        
     ]
+    enum Comparison {
+        static let orderSorting : (CustomCoordinates, CustomCoordinates) -> Bool = {
+            return $0.order < $1.order
+        }
+        static let distanceSorting : (CustomCoordinates, CustomCoordinates) -> Bool = {
+            return $0.distance < $1.distance
+        }
+    }
 }

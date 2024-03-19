@@ -29,13 +29,12 @@ class FirstViewController: UIViewController{
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(self.handleLongPress))
         longPress.minimumPressDuration = 1
         longPress.delaysTouchesBegan = true
-//        longPress.delegate = self
         return longPress
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        var longPress = setupLongPress()
+        let longPress = setupLongPress()
         mapView.delegate = self
         mapView.addGestureRecognizer(longPress)
         mapView.showsCompass = false
